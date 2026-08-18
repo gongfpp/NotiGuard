@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">消息哨兵</string>
+    <string name="notification_listener_label">消息哨兵 · 通知监听</string>
+</resources>
