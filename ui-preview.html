@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NotiGuard 消息哨兵 · 实机 UI 预览</title>
+<style>
+  :root{
+    --primary:#3D5AFE;
+    --primary-container:#E8ECFF;
+    --bg:#F5F6FA;
+    --surface:#FFFFFF;
+    --on-surface:#1B1B1F;
+    --muted:#8A8F99;
+    --outline:#E3E5EC;
+    --body:#5A5F6B;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    background:linear-gradient(160deg,#eef1f8,#dfe4f1);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    color:var(--on-surface);padding:28px 12px 40px;
+  }
+  h1.title{font-size:15px;color:#555;font-weight:600;margin:0 0 4px;letter-spacing:.5px;}
+  p.sub{font-size:12px;color:#8a8f99;margin:0 0 22px;}
+
+  /* ===== 手机外壳 ===== */
+  .phone{
+    position:relative;width:392px;height:806px;border-radius:46px;
+    background:#1c1c1e;padding:13px;
+    box-shadow:0 30px 60px rgba(30,40,90,.28),inset 0 0 2px 2px #2c2c2e;
+  }
+  .notch{
+    position:absolute;top:13px;left:50%;transform:translateX(-50%);
+    width:148px;height:26px;background:#1c1c1e;border-radius:0 0 16px 16px;z-index:30;
+  }
+  .screen{
+    position:relative;width:100%;height:100%;background:var(--bg);
+    border-radius:34px;overflow:hidden;display:flex;flex-direction:column;
+  }
+
+  /* ===== 状态栏 ===== */
+  .statusbar{
+    height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 22px;font-size:13px;font-weight:600;color:#1b1b1f;
+  }
+  .statusbar .right{display:flex;gap:6px;align-items:center;}
+  .statusbar svg{display:block;}
+
+  /* ===== 内容区 ===== */
+  .content{flex:1;overflow-y:auto;padding:8px 16px 16px;}
+  .page{display:none;flex-direction:column;min-height:100%;}
+  .page.active{display:flex;}
+
+  .h-title{font-size:22px;font-weight:800;margin:6px 0 2px;letter-spacing:.3px;}
+  .h-sub{font-size:13px;color:var(--muted);margin:0 0 4px;}
+  .section{font-size:12.5px;color:var(--muted);font-weight:800;padding:14px 4px 6px;letter-spacing:.4px;}
+
+  .card{
+    background:var(--surface);border-radius:14px;padding:6px 16px;
+    box-shadow:0 1px 3px rgba(20,30,80,.07);margin-bottom:2px;
+  }
+  .row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f1f2f6;}
+  .row:last-child{border-bottom:none;}
+  .row .t{font-size:14.5px;font-weight:600;}
+  .row .s{font-size:12px;color:var(--muted);margin-top:2px;}
+  .col{flex:1;min-width:0;}
+
+  /* 开关 */
+  .sw{width:46px;height:27px;border-radius:14px;background:#dfe1e8;position:relative;flex:0 0 46px;transition:.2s;cursor:pointer;}
+  .sw.on{background:var(--primary);}
+  .sw::after{content:"";position:absolute;top:2.5px;left:2.5px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.25);}
+  .sw.on::after{left:21.5px;}
+
+  /* 权限提示 */
+  .perm{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f2f6;}
+  .perm:last-child{border-bottom:none;}
+  .perm .t{font-size:14px;font-weight:600;}
+  .perm .s{font-size:11.5px;margin-top:3px;}
+  .btn-grant{background:var(--primary-container);color:var(--primary);border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+  .ok{color:var(--primary);font-weight:700;} .no{color:var(--muted);font-weight:600;}
+
+  /* 列表项（关键字 / 记录） */
+  .item{background:var(--surface);border-radius:14px;padding:14px 16px;box-shadow:0 1px 3px rgba(20,30,80,.07);margin-bottom:10px;}
+  .item .top{display:flex;align-items:center;justify-content:space-between;}
+  .item .kw{font-size:15px;font-weight:700;}
+  .item .mode{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .chip{background:var(--primary-container);color:var(--primary);font-size:11.5px;font-weight:800;border-radius:6px;padding:3px 7px;}
+  .del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;}
+  .meta{font-size:12px;color:var(--muted);margin-top:8px;}
+  .meta.t{color:var(--on-surface);font-weight:600;font-size:13.5px;margin-top:4px;}
+  .meta.b{color:var(--body);font-size:13px;margin-top:2px;}
+
+  /* FAB */
+  .fab{
+    position:absolute;right:18px;bottom:18px;width:56px;height:56px;border-radius:50%;
+    background:var(--primary);color:#fff;border:none;font-size:30px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 16px rgba(61,90,254,.5);cursor:pointer;z-index:12;
+  }
+
+  /* 顶部操作（清空） */
+  .head-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+  .btn-clear{background:none;border:1.5px solid var(--primary);color:var(--primary);border-radius:10px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+
+  /* ===== 底部导航 ===== */
+  .navbar{
+    flex:0 0 64px;background:#fff;border-top:1px solid var(--outline);
+    display:flex;padding:6px 0 8px;
+  }
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;cursor:pointer;border:none;background:none;}
+  .nav-item.active{color:var(--primary);}
+  .nav-item svg{display:block;}
+
+  /* ===== 对话框 / 弹窗 ===== */
+  .mask{position:absolute;inset:0;background:rgba(20,24,40,.4);display:none;align-items:center;justify-content:center;z-index:20;padding:24px;}
+  .mask.show{display:flex;}
+  .dialog{background:#fff;border-radius:16px;padding:20px;width:100%;box-shadow:0 12px 30px rgba(0,0,0,.25);}
+  .dialog h3{margin:0 0 12px;font-size:18px;font-weight:800;}
+  .field{width:100%;border:1px solid var(--outline);border-radius:10px;padding:11px 12px;font-size:14px;outline:none;color:var(--on-surface);}
+  .field:focus{border-color:var(--primary);}
+  .mlabel{font-size:12px;color:var(--muted);font-weight:700;margin:14px 0 8px;}
+  .modes{display:flex;gap:8px;}
+  .modes button{flex:1;border:1px solid var(--primary);background:#fff;color:var(--primary);border-radius:10px;padding:9px 0;font-size:13px;font-weight:700;cursor:pointer;}
+  .modes button.sel{background:var(--primary);color:#fff;}
+  .dlg-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+  .dlg-acts button{border:none;background:none;font-size:14px;font-weight:700;padding:8px 14px;cursor:pointer;border-radius:10px;}
+  .dlg-acts .cancel{color:var(--muted);}
+  .dlg-acts .save{color:#fff;background:var(--primary);}
+
+  /* 命中悬浮弹窗 */
+  .popup-wrap{position:absolute;top:50px;left:0;right:0;display:none;justify-content:center;padding:12px;z-index:22;}
+  .popup-wrap.show{display:flex;}
+  .popup{background:#fff;border-radius:16px;padding:16px;width:100%;box-shadow:0 10px 28px rgba(30,40,90,.35);}
+  .popup .ph{display:flex;align-items:center;gap:6px;font-size:16px;font-weight:800;}
+  .popup .ph .x{margin-left:auto;color:var(--muted);font-size:20px;cursor:pointer;background:none;border:none;}
+  .popup .pc{display:inline-block;background:var(--primary-container);color:var(--primary);font-weight:800;font-size:13px;border-radius:8px;padding:4px 8px;margin-top:10px;}
+  .popup .pa{font-size:12px;color:var(--muted);margin-top:10px;}
+  .popup .pt{font-weight:700;font-size:14px;margin-top:4px;}
+  .popup .pb{color:var(--body);font-size:13px;margin-top:3px;line-height:1.45;}
+  .popup .pok{width:100%;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;margin-top:14px;cursor:pointer;}
+
+  /* 关键字页：预览命中弹窗入口 */
+  .demo-inline{display:inline-block;background:var(--primary-container);color:var(--primary);border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;margin:8px 0 2px;}
+
+  .legend{margin-top:22px;font-size:11.5px;color:#7a8090;text-align:center;max-width:420px;line-height:1.6;}
+</style>
+</head>
+<body>
+  <h1 class="title">NotiGuard · 消息哨兵 实机 UI 预览</h1>
+  <p class="sub">点击下方底部导航切换页面 · 右下 + 新增关键字 · 在「关键字」页可预览命中悬浮弹窗</p>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <!-- 状态栏 -->
+      <div class="statusbar">
+        <span>10:24</span>
+        <span class="right">
+          <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7" width="3" height="5" rx="1" fill="#1b1b1f"/><rect x="4.5" y="5" width="3" height="7" rx="1" fill="#1b1b1f"/><rect x="9" y="2.5" width="3" height="9.5" rx="1" fill="#1b1b1f"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="#1b1b1f"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5a1.6 1.6 0 0 1-.9-1.4C4.3 9.6 1.5 7.1 1.5 4.1A2.6 2.6 0 0 1 8 2a2.6 2.6 0 0 1 6.5 2.1c0 3-2.8 5.5-5.6 6a1.6 1.6 0 0 1-.9 1.4z" fill="none" stroke="#1b1b1f" stroke-width="1.3"/></svg>
+          <svg width="24" height="12" viewBox="0 0 24 12"><rect x="1" y="1.5" width="20" height="9" rx="2.5" fill="none" stroke="#1b1b1f" stroke-width="1.2"/><rect x="2.5" y="3" width="15" height="6" rx="1" fill="#1b1b1f"/><rect x="21.5" y="4" width="1.6" height="4" rx="1" fill="#1b1b1f"/></svg>
+        </span>
+      </div>
+
+      <div class="content">
+        <!-- 首页 -->
+        <div class="page active" id="p-home">
+          <div class="h-title">消息哨兵</div>
+          <div class="h-sub">实时监听通知与短信，命中关键字立即提醒</div>
+
+          <div class="card" style="margin-top:8px">
+            <div class="row"><div class="col"><div class="t">监听总开关</div><div class="s">正在监听</div></div><div class="sw on" onclick="toggle(this)"></div></div>
+          </div>
+
+          <div class="section">权限授权</div>
+          <div class="card">
+            <div class="perm"><div class="col"><div class="t">通知监听权限</div><div class="s no">未授权，点击前往系统设置</div></div><button class="btn-grant">去开启</button></div>
+            <div class="perm"><div class="col"><div class="t">悬浮窗权限（应用内弹窗）</div><div class="s ok">已授权</div></div></div>
+          </div>
+
+          <div class="section">监听来源</div>
+          <div class="card">
+            <div class="row"><div class="col"><div class="t">短信</div><div class="s">读取收件箱新短信</div></div><div class="sw on" onclick="toggle(this)"></div></div>
+          </div>
+
+          <div class="section">提醒方式</div>
+          <div class="card">
+            <div class="row"><div class="col"><div class="t">系统通知</div><div class="s">高优先级通知栏提醒</div></div><div class="sw on" onclick="toggle(this)"></div></div>
+            <div class="row"><div class="col"><div class="t">应用内弹窗</div><div class="s">悬浮窗即时弹窗</div></div><div class="sw on" onclick="toggle(this)"></div></div>
+            <div class="row"><div class="col"><div class="t">声音</div><div class="s">播放提示音</div></div><div class="sw" onclick="toggle(this)"></div></div>
+            <div class="row"><div class="col"><div class="t">震动</div><div class="s">震动反馈</div></div><div class="sw on" onclick="toggle(this)"></div></div>
+          </div>
+        </div>
+
+        <!-- 来源 -->
+        <div class="page" id="p-sources">
+          <div class="h-title">监听来源</div>
+          <div class="h-sub">仅对下方已开启的 App 进行关键字检测（短信在首页设置）</div>
+          <div class="section">已安装应用（142）</div>
+          <div class="card" id="appList"></div>
+        </div>
+
+        <!-- 关键字 -->
+        <div class="page" id="p-keywords">
+          <div class="h-title">关键字列表</div>
+          <div class="h-sub">命中任意一个关键字即触发提醒</div>
+          <button class="demo-inline" onclick="showPopup()">▶ 预览命中悬浮弹窗</button>
+          <div class="section">已配置（<span id="kwCount">4</span>）</div>
+          <div id="kwList"></div>
+          <button class="fab" onclick="openDialog()">+</button>
+        </div>
+
+        <!-- 记录 -->
+        <div class="page" id="p-history">
+          <div class="head-row">
+            <div><div class="h-title">命中记录</div><div class="h-sub">共 <span id="recCount">3</span> 条</div></div>
+            <button class="btn-clear" onclick="clearRecords()">清空</button>
+          </div>
+          <div class="section">时间线</div>
+          <div id="recList"></div>
+        </div>
+      </div>
+
+      <!-- 命中悬浮弹窗 -->
+      <div class="popup-wrap" id="popupWrap">
+        <div class="popup">
+          <div class="ph">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3D5AFE" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            命中关键字
+            <button class="x" onclick="hidePopup()">✕</button>
+          </div>
+          <div class="pc">验证码</div>
+          <div class="pa">微信</div>
+          <div class="pt">[微信通知] 登录验证</div>
+          <div class="pb">您的验证码是 628491，5 分钟内有效，请勿泄露给他人。</div>
+          <button class="pok" onclick="hidePopup()">知道了</button>
+        </div>
+      </div>
+
+      <!-- 新增关键字对话框 -->
+      <div class="mask" id="dlgMask">
+        <div class="dialog" onclick="event.stopPropagation()">
+          <h3>新增关键字</h3>
+          <input class="field" id="kwInput" placeholder="关键字内容" />
+          <div class="mlabel">匹配方式</div>
+          <div class="modes">
+            <button class="sel" data-mode="包含" onclick="selMode(this)">包含</button>
+            <button data-mode="相等" onclick="selMode(this)">相等</button>
+            <button data-mode="正则" onclick="selMode(this)">正则</button>
+          </div>
+          <div class="dlg-acts">
+            <button class="cancel" onclick="closeDialog()">取消</button>
+            <button class="save" onclick="saveKw()">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部导航 -->
+      <div class="navbar">
+        <button class="nav-item active" data-p="home">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9h14v-9"/></svg>
+          首页
+        </button>
+        <button class="nav-item" data-p="sources">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+          来源
+        </button>
+        <button class="nav-item" data-p="keywords">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 13.5 12 22 3 13c-2.5-2.5-2.5-6 0-8.5S12 1 12 1l2 2 4 4 2.5 6.5z"/><circle cx="8.5" cy="8.5" r="1.6" fill="currentColor"/></svg>
+          关键字
+        </button>
+        <button class="nav-item" data-p="history">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>
+          记录
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">预览为静态高保真还原（基于 Compose 源码的配色与布局），非编译运行截图。真实交互需 Android 8.0+ 真机：Android Studio 打开工程 → 授权通知监听 / 悬浮窗 → 运行。</div>
+
+<script>
+  function toggle(el){ el.classList.toggle('on'); }
+
+  // 导航切换
+  document.querySelectorAll('.nav-item').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.getElementById('p-'+b.dataset.p).classList.add('active');
+    };
+  });
+
+  // 来源列表
+  const apps=[
+    {n:'微信',p:'com.tencent.mm',on:true},
+    {n:'QQ',p:'com.tencent.mobileqq',on:false},
+    {n:'支付宝',p:'com.eg.android.AlipayGphone',on:true},
+    {n:'钉钉',p:'com.alibaba.android.rimet',on:false},
+    {n:'短信',p:'com.android.messaging',on:true},
+    {n:'微博',p:'com.sina.weibo',on:false},
+  ];
+  const appList=document.getElementById('appList');
+  apps.forEach(a=>{
+    const d=document.createElement('div');d.className='row';
+    d.innerHTML=`<div class="col"><div class="t">${a.n}</div><div class="s">${a.p}</div></div><div class="sw ${a.on?'on':''}" onclick="toggle(this)"></div>`;
+    appList.appendChild(d);
+  });
+
+  // 关键字列表
+  let kws=[
+    {k:'验证码',m:'包含匹配',on:true},
+    {k:'快递',m:'包含匹配',on:true},
+    {k:'\\d{6}',m:'正则表达式',on:false},
+    {k:'会议提醒',m:'完全相等',on:true},
+  ];
+  const kwList=document.getElementById('kwList');
+  function renderKw(){
+    kwList.innerHTML='';
+    kws.forEach((w,i)=>{
+      const d=document.createElement('div');d.className='item';
+      d.innerHTML=`<div class="top"><div><div class="kw">${w.k}</div><div class="mode">${w.m}</div></div>
+        <div style="display:flex;align-items:center;gap:6px">
+        <div class="sw ${w.on?'on':''}" onclick="toggleKw(${i})"></div>
+        <button class="del" onclick="delKw(${i})">🗑</button></div></div>`;
+      kwList.appendChild(d);
+    });
+    document.getElementById('kwCount').textContent=kws.length;
+  }
+  function toggleKw(i){kws[i].on=!kws[i].on;renderKw();}
+  function delKw(i){kws.splice(i,1);renderKw();}
+  renderKw();
+
+  // 记录列表
+  let recs=[
+    {t:'08-18 10:20:33',k:'验证码',s:'微信',ti:'[微信通知] 登录验证',b:'您的验证码是 628491，5 分钟内有效，请勿泄露给他人。'},
+    {t:'08-18 09:15:02',k:'快递',s:'短信',ti:'[短信] 派送通知',b:'您的快递已到达菜鸟驿站，取件码 A-2387，请尽快领取。'},
+    {t:'08-17 21:43:10',k:'会议提醒',s:'钉钉',ti:'[钉钉] 日程',b:'明日 10:00 项目评审会，地点：3 号楼 502。'},
+  ];
+  const recList=document.getElementById('recList');
+  function renderRec(){
+    recList.innerHTML='';
+    recs.forEach((r,i)=>{
+      const d=document.createElement('div');d.className='item';
+      d.innerHTML=`<div class="top"><div style="display:flex;align-items:center;gap:8px">
+        <span class="meta">${r.t}</span><span class="chip">${r.k}</span></div>
+        <button class="del" onclick="delRec(${i})">🗑</button></div>
+        <div class="meta">${r.s}</div>
+        <div class="meta t">${r.ti}</div>
+        <div class="meta b">${r.b}</div>`;
+      recList.appendChild(d);
+    });
+    document.getElementById('recCount').textContent=recs.length;
+  }
+  function delRec(i){recs.splice(i,1);renderRec();}
+  function clearRecords(){recs=[];renderRec();}
+  renderRec();
+
+  // 对话框
+  function openDialog(){document.getElementById('dlgMask').classList.add('show');}
+  function closeDialog(){document.getElementById('dlgMask').classList.remove('show');}
+  document.getElementById('dlgMask').onclick=closeDialog;
+  let curMode='包含';
+  function selMode(el){document.querySelectorAll('.modes button').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');curMode=el.dataset.mode;}
+  function saveKw(){
+    const v=document.getElementById('kwInput').value.trim();
+    if(!v)return;
+    const map={'包含':'包含匹配','相等':'完全相等','正则':'正则表达式'};
+    kws.unshift({k:v,m:map[curMode],on:true});
+    renderKw();document.getElementById('kwInput').value='';closeDialog();
+  }
+
+  // 命中弹窗
+  function showPopup(){document.getElementById('popupWrap').classList.add('show');}
+  function hidePopup(){document.getElementById('popupWrap').classList.remove('show');}
+</script>
+</body>
+</html>

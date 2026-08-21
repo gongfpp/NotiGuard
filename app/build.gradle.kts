@@ -71,4 +71,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     implementation("androidx.core:core:1.13.1")
+
+    // Material Components 提供 XML 层 Theme.Material3.* 主题（Manifest 窗口主题用）
+    implementation("com.google.android.material:material:1.12.0")
 }
