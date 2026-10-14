@@ -25,14 +25,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.platform.ComposeView
 import com.mass.notiguard.ui.theme.SurfaceColor
 
-/** 悬浮窗用的 ComposeView 载体 */
-class NotiGuardComposeView(context: Context) : ComposeView(context)
+/** 悬浮窗用的 ComposeView 载体（ComposeView 是 final，不能继承） */
+fun NotiGuardComposeView(context: Context): ComposeView = ComposeView(context)
 
 /** 命中关键字时的悬浮弹窗卡片（同时用于悬浮窗与预览） */
 @Composable
