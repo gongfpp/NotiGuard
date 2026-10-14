@@ -3,6 +3,7 @@ package com.mass.notiguard.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.core.content.ContextCompat
 import com.mass.notiguard.data.SettingsRepository
 import com.mass.notiguard.service.GuardForegroundService
 import kotlinx.coroutines.CoroutineScope

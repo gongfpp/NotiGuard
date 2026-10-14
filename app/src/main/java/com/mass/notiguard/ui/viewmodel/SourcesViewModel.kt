@@ -9,6 +9,7 @@ import com.mass.notiguard.data.SourceDao
 import com.mass.notiguard.domain.SourceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -34,7 +35,7 @@ class SourcesViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun loadInstalledApps(): List<AppItem> = withContext(Dispatchers.IO) {
         val pm = getApplication<Application>().packageManager
         val stored = mutableMapOf<String, Boolean>()
-        kotlinx.coroutines.flow.first(dao.getAll()).associateTo(stored) { it.packageName to it.enabled }
+        dao.getAll().first().associateTo(stored) { it.packageName to it.enabled }
 
         val intent = android.content.Intent(android.content.Intent.ACTION_MAIN, null).apply {
             addCategory(android.content.Intent.CATEGORY_LAUNCHER)

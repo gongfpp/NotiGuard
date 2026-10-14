@@ -3,6 +3,7 @@ package com.mass.notiguard.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 /** 扁平化、轻量、干净的配色（以靛蓝为主色，浅灰背景） */
