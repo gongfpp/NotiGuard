@@ -92,6 +92,8 @@ com.mass.notiguard
 
 仓库已提交 Gradle Wrapper：`gradlew` 与 `gradlew.bat`；`gradle/wrapper/gradle-wrapper.properties` 固定使用 Gradle 8.9。首次同步会下载该 Gradle 发行包及项目依赖。
 
+> **验证状态：** 本次 README/PR 更新未执行 Android 构建或真机测试；敏感功能只能在隔离设备/模拟器和合成数据上验证，不要读取真实短信或通知。
+
 **方式一（推荐）：Android Studio**
 1. 使用兼容 AGP 8.5.2 的 Android Studio（JDK 17）打开仓库根目录。
 2. 等待 Gradle 同步完成。
