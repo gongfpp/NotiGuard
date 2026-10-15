@@ -6,9 +6,11 @@
 
 <p align="center"><sub>从仓库的 <a href="ui-preview.html">可交互静态 HTML 原型</a> 导出；画面使用合成示例内容，不是 Android 编译运行或真机截图，也不含真实短信/通知数据。</sub></p>
 
-一款 Android 原生（Kotlin + Jetpack Compose）移动应用：实时监听**系统通知**与**短信**，对用户自定义的关键字进行匹配，命中后通过**系统通知 / 应用内悬浮窗弹窗 / 声音 / 震动**立即提醒。配置项完全开放：可自由设置监听来源、关键字列表与提醒方式。
+一款 Android 原生（Kotlin + Jetpack Compose）移动应用：实时监听**系统通知**与**短信**，对用户自定义的关键字进行匹配，命中后通过**系统通知 / 跨应用悬浮窗弹窗 / 声音 / 震动**立即提醒。配置项完全开放：可自由设置监听来源、关键字列表与提醒方式。
 
 > ⚠️ **平台说明**：读取其它 App 的通知内容、读取短信，是 Android 才提供的系统能力。iOS 出于隐私沙盒限制，第三方 App 无法访问其它 App 的通知与短信，因此本应用**仅支持 Android**（minSdk 26 / Android 8.0+），无法在 iOS 上等价运行。
+>
+> ⚠️ **敏感内容曝光风险**：命中通知的通知渠道设为 `VISIBILITY_PUBLIC`，通知内容可能在锁屏上可见；`TYPE_APPLICATION_OVERLAY` 跨应用显示悬浮窗，也可能在其它 App 界面上展示匹配内容。建议在 Android 系统锁屏设置中隐藏通知敏感内容，并谨慎使用悬浮窗提醒。
 
 ---
 
@@ -22,8 +24,8 @@
   - 完全相等
   - 正则表达式
 - **多渠道提醒**
-  - 系统通知（高优先级、可绕过勿扰）
-  - 应用内悬浮窗弹窗（`SYSTEM_ALERT_WINDOW`，8 秒自动消失）
+  - 系统通知（高优先级；代码尝试设置绕过勿扰，但需系统授予 `ACCESS_NOTIFICATION_POLICY`，项目未声明/请求该授权且未验证是否生效，不能保证可绕过）
+  - 跨应用悬浮窗弹窗（`SYSTEM_ALERT_WINDOW` / `TYPE_APPLICATION_OVERLAY`，8 秒自动消失）
   - 声音、震动可独立开关
 - **自定义配置**
   - 监听来源开关（按 App 维度）
@@ -74,10 +76,12 @@ com.mass.notiguard
 | 权限 | 用途 | 获取方式 |
 | --- | --- | --- |
 | `BIND_NOTIFICATION_LISTENER_SERVICE` | 监听系统通知 | 在「设置 → 通知使用权」中手动开启（首页按钮跳转） |
-| `READ_SMS` | 读取短信 | 运行时弹窗授权 |
+| `READ_SMS` | 读取短信收件箱 | 运行时弹窗授权；当前监听使用 `ContentObserver` |
+| `RECEIVE_SMS` | Manifest 中有声明；当前监听逻辑使用 `READ_SMS` + `ContentObserver`，此权限是否必要尚未核实 | 代码未见运行时请求 `RECEIVE_SMS` |
 | `POST_NOTIFICATIONS` | 发送提醒通知 | 运行时弹窗授权（Android 13+） |
-| `SYSTEM_ALERT_WINDOW` | 应用内悬浮窗弹窗 | 在「设置 → 应用 → 悬浮窗」手动开启（首页按钮跳转） |
-| `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_DATA_SYNC` | 前台保活短信监听 | 声明即授予 |
+| `ACCESS_NOTIFICATION_POLICY` | 绕过勿扰所需的通知政策访问权 | 当前 Manifest 未声明、代码未请求，是否生效未验证；不能保证绕过勿扰 |
+| `SYSTEM_ALERT_WINDOW` | 跨应用悬浮窗弹窗 | 在「设置 → 应用 → 悬浮窗」手动开启（首页按钮跳转） |
+| `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_DATA_SYNC` | 前台保活短信监听 | Manifest 声明 |
 | `VIBRATE` / `RECEIVE_BOOT_COMPLETED` | 震动 / 开机自启 | 普通权限 |
 
 > 通知监听与悬浮窗属于敏感权限，必须由用户手动在系统设置中授予；App 首次进入首页会展示授权引导。
@@ -100,7 +104,7 @@ com.mass.notiguard
 ```
 
 ```bash
-./gradlew :app:assembleDebug
+bash ./gradlew :app:assembleDebug
 ```
 
 Debug APK 输出到 `app/build/outputs/apk/debug/app-debug.apk`。无需另行生成 Wrapper。
@@ -122,6 +126,7 @@ Debug APK 输出到 `app/build/outputs/apk/debug/app-debug.apk`。无需另行�
 
 - **仅 Android**：iOS 无法等价实现（系统隐私沙盒限制）。
 - **通知内容完整性**：部分 App（如微信）会隐藏通知文本，需在系统设置中允许该 App 显示完整通知内容，否则只能拿到标题。
+- **本地数据与系统备份**：Room 命中记录包含来源、标题、匹配正文和关键词；Manifest 设置 `android:allowBackup="true"`，Android Auto Backup 可能纳入这些数据库内容，实际行为取决于 Android/设备备份设置，尚未验证。当前仓库未声明 `INTERNET` 权限，也未发现应用主动上传实现；这不构成对系统备份行为的保证。
 - **前台服务保活**：后台进程可能被厂商 ROM 杀掉，建议在电池优化中设为「不受限制」。
 - **合规**：请仅用于本人设备的合法提醒场景；读取短信/通知涉及隐私，勿在未经授权的情况下用于监控他人设备。
 - **短信正则**：`REGEX` 模式对非法表达式会安全跳过（不会崩溃）。
