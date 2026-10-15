@@ -1,5 +1,11 @@
 # 消息哨兵 (NotiGuard)
 
+<p align="center">
+  <img src="docs/images/notiguard-ui-prototype.png" width="360" alt="NotiGuard 静态 HTML 界面原型：消息提醒首页">
+</p>
+
+<p align="center"><sub>从仓库的 <a href="ui-preview.html">可交互静态 HTML 原型</a> 导出；画面使用合成示例内容，不是 Android 编译运行或真机截图，也不含真实短信/通知数据。</sub></p>
+
 一款 Android 原生（Kotlin + Jetpack Compose）移动应用：实时监听**系统通知**与**短信**，对用户自定义的关键字进行匹配，命中后通过**系统通知 / 应用内悬浮窗弹窗 / 声音 / 震动**立即提醒。配置项完全开放：可自由设置监听来源、关键字列表与提醒方式。
 
 > ⚠️ **平台说明**：读取其它 App 的通知内容、读取短信，是 Android 才提供的系统能力。iOS 出于隐私沙盒限制，第三方 App 无法访问其它 App 的通知与短信，因此本应用**仅支持 Android**（minSdk 26 / Android 8.0+），无法在 iOS 上等价运行。
@@ -80,18 +86,24 @@ com.mass.notiguard
 
 ## 构建与运行
 
-**方式一（推荐）：Android Studio**
-1. 用 Android Studio（Hedgehog / Iguana 及以上，AGP 8.5+）打开 `NotiGuard` 目录
-2. 等待 Gradle 同步（会自动下载 `gradle-8.9` 与依赖）
-3. 连接 Android 8.0+ 真机（模拟器无短信、通知监听受限），点击 ▶ Run
+仓库已提交 Gradle Wrapper：`gradlew` 与 `gradlew.bat`；`gradle/wrapper/gradle-wrapper.properties` 固定使用 Gradle 8.9。首次同步会下载该 Gradle 发行包及项目依赖。
 
-**方式二：命令行**
-```bash
-cd NotiGuard
-./gradlew assembleDebug        # Linux / macOS
-gradlew.bat assembleDebug      # Windows
+**方式一（推荐）：Android Studio**
+1. 使用兼容 AGP 8.5.2 的 Android Studio（JDK 17）打开仓库根目录。
+2. 等待 Gradle 同步完成。
+3. 连接 Android 8.0+ 设备并点击 ▶ Run。不要在含真实短信/通知的设备上测试；需要验证时请使用隔离设备和合成数据。
+
+**方式二：命令行**（在仓库根目录运行）
+
+```powershell
+.\gradlew.bat :app:assembleDebug
 ```
-> 若本地没有 Gradle Wrapper，先执行 `gradle wrapper`（需已安装 Gradle 8.9）。
+
+```bash
+./gradlew :app:assembleDebug
+```
+
+Debug APK 输出到 `app/build/outputs/apk/debug/app-debug.apk`。无需另行生成 Wrapper。
 
 ---
 
